@@ -6,31 +6,59 @@
 #include <iostream>
 
 int main(int argc, char *argv[]) {
-  /* Initialize the Run Copy of Disk */
   Disk disk_run;
-  // StaticBuffer buffer;
-  // OpenRelTable cache;
-  unsigned char buffer[BLOCK_SIZE];
-  Disk::readBlock(buffer, 7000);
-  char message[]="hello";
-  memcpy(buffer+20,message,6);
-  Disk::writeBlock(buffer,7000);
-  unsigned char buffer2[BLOCK_SIZE];
-  char message2[6];
-  Disk::readBlock(buffer2,7000);
-  memcpy(message2,buffer2+20,6);
-  std::cout << message2 << std::endl;
-  //Exercise Q1
-  unsigned char buffer3[BLOCK_SIZE];
-  for (int block=0;block<4;block++) //Block Allocation Map is stored at Blocks 0 to 3
-  {
-    Disk::readBlock(buffer,block);
-    std::cout << "BAM Block " << block << std::endl;
-    for (int i=0;i<BLOCK_SIZE;i++)
-      std::cout << (int)buffer[i] << " ";
-    std::cout << std::endl;
+  
+  // create objects for the relation catalog and attribute catalog
+  RecBuffer relCatBuffer(RELCAT_BLOCK);
+
+  HeadInfo relCatHeader;
+  HeadInfo attrCatHeader;
+
+  // load the headers of both the blocks into relCatHeader and attrCatHeader.
+  // (we will implement these functions later)
+  relCatBuffer.getHeader(&relCatHeader);
+  
+  /* i = 0 to total relation count */
+  for (int i=0;i<relCatHeader.numEntries;i++) {
+
+    Attribute relCatRecord[RELCAT_NO_ATTRS]; // will store the record from the relation catalog
+
+    relCatBuffer.getRecord(relCatRecord, i);
+
+    printf("Relation: %s\n", relCatRecord[RELCAT_REL_NAME_INDEX].sVal);
+    
+    int curr = ATTRCAT_BLOCK;
+    while (curr!=-1)
+    {
+      
+      RecBuffer attrCatBuffer(curr);
+      attrCatBuffer.getHeader(&attrCatHeader);
+      
+      /* j = 0 to number of entries in the attribute catalog */
+      for (int j=0;j<attrCatHeader.numEntries;j++) {
+
+        // declare attrCatRecord and load the attribute catalog entry into it
+        Attribute attrCatRecord[ATTRCAT_NO_ATTRS];
+        attrCatBuffer.getRecord(attrCatRecord, j);
+
+        /* attribute catalog entry corresponds to the current relation */
+        if (strcmp(attrCatRecord[ATTRCAT_REL_NAME_INDEX].sVal,relCatRecord[RELCAT_REL_NAME_INDEX].sVal)==0) {
+          if (strcmp(attrCatRecord[ATTRCAT_REL_NAME_INDEX].sVal,"Students")==0 && strcmp(attrCatRecord[ATTRCAT_ATTR_NAME_INDEX].sVal,"Class")==0)
+          {
+            strcpy(attrCatRecord[ATTRCAT_ATTR_NAME_INDEX].sVal,"Batch");
+            attrCatBuffer.setRecord(attrCatRecord,j);
+          }
+          const char *attrType = attrCatRecord[ATTRCAT_ATTR_TYPE_INDEX].nVal == NUMBER ? "NUM" : "STR";
+          printf("  %s: %s\n", attrCatRecord[ATTRCAT_ATTR_NAME_INDEX].sVal, attrType);
+        }
+      }
+    
+      curr = attrCatHeader.rblock;
+    }
+    
+    printf("\n");
+    
   }
 
-  //return FrontendInterface::handleFrontend(argc, argv);
   return 0;
 }
