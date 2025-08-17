@@ -1,13 +1,14 @@
 #include "StaticBuffer.h"
 
+// the declarations for this class can be found at "StaticBuffer.h"
+
 unsigned char StaticBuffer::blocks[BUFFER_CAPACITY][BLOCK_SIZE];
 struct BufferMetaInfo StaticBuffer::metainfo[BUFFER_CAPACITY];
 
 StaticBuffer::StaticBuffer() {
 
   // initialise all blocks as free
-  /*bufferIndex = 0 to BUFFER_CAPACITY-1*/
-  for (int bufferIndex=0;bufferIndex<BUFFER_CAPACITY;bufferIndex++) {
+  for (int bufferIndex = 0;bufferIndex<BUFFER_CAPACITY;bufferIndex++) {
     metainfo[bufferIndex].free = true;
   }
 }
@@ -20,7 +21,7 @@ subsequent stages, we will implement the write-back functionality here.
 StaticBuffer::~StaticBuffer() {}
 
 int StaticBuffer::getFreeBuffer(int blockNum) {
-  if (blockNum < 0 || blockNum >= DISK_BLOCKS) {
+  if (blockNum < 0 || blockNum > DISK_BLOCKS) {
     return E_OUTOFBOUND;
   }
   int allocatedBuffer;
@@ -28,19 +29,14 @@ int StaticBuffer::getFreeBuffer(int blockNum) {
   // iterate through all the blocks in the StaticBuffer
   // find the first free block in the buffer (check metainfo)
   // assign allocatedBuffer = index of the free block
-  
-  for (int i=0;i<BUFFER_CAPACITY;i++)
-  {
-    if (metainfo[i].free == true)
-    {
-      allocatedBuffer = i;
-      metainfo[allocatedBuffer].free = false;
-      metainfo[allocatedBuffer].blockNum = blockNum;
-      break;
+  for(int i=0;i<BUFFER_CAPACITY;i++){
+    if(metainfo[i].free==true){
+        allocatedBuffer=i;
+        metainfo[allocatedBuffer].free = false;
+        metainfo[allocatedBuffer].blockNum = blockNum;
+        break;
+        }
     }
-  }
-
-  
   return allocatedBuffer;
 }
 
@@ -50,16 +46,14 @@ int StaticBuffer::getFreeBuffer(int blockNum) {
 int StaticBuffer::getBufferNum(int blockNum) {
   // Check if blockNum is valid (between zero and DISK_BLOCKS)
   // and return E_OUTOFBOUND if not valid.
-  
-  if (blockNum<0 || blockNum>=DISK_BLOCKS)
+  if(blockNum<0 || blockNum>=DISK_BLOCKS)
     return E_OUTOFBOUND;
-  
-  // find and return the bufferIndex which corresponds to blockNum (check metainfo)
-  for (int bufferIndex=0;bufferIndex<BUFFER_CAPACITY;bufferIndex++) {
-    if (metainfo[bufferIndex].blockNum == blockNum)
-      return bufferIndex;
-  }
 
+  // find and return the bufferIndex which corresponds to blockNum (check metainfo)
+    for(int bufferIndex=0;bufferIndex<BUFFER_CAPACITY;bufferIndex++){
+        if(metainfo[bufferIndex].blockNum==blockNum)
+            return bufferIndex;
+    }
   // if block is not in the buffer
   return E_BLOCKNOTINBUFFER;
 }

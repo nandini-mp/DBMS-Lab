@@ -159,7 +159,7 @@ int OpenRelTable::getRelId(char relName[ATTR_SIZE]) {
   if(strcmp(relName,ATTRCAT_RELNAME)==0)
   return ATTRCAT_RELID;
   // if relname is ATTRCAT_RELNAME, return ATTRCAT_RELID
-  if (strcmp(relName, "Student") == 0)
+  if (strcmp(relName, "Students") == 0)
     return 2;
   return E_RELNOTOPEN;
 }

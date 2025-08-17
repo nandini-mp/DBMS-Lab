@@ -1,10 +1,7 @@
 #include "Algebra.h"
-
 #include <cstring>
-#include <cstdio>
-#include <cstdlib>
-
-
+#include <iostream>
+using namespace std;
 
 // will return if a string can be parsed as a floating point number
 bool isNumber(char *str) {
@@ -24,7 +21,6 @@ bool isNumber(char *str) {
   return ret == 1 && len == strlen(str);
 }
 
-
 /* used to select all the records that satisfy a condition.
 the arguments of the function are
 - srcRel - the source relation we want to select from
@@ -38,14 +34,15 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
   if (srcRelId == E_RELNOTOPEN) {
     return E_RELNOTOPEN;
   }
-  if (srcRelId<0) return srcRelId;
 
   AttrCatEntry attrCatEntry;
-  // get the attribute catalog entry for attr, using AttrCacheTable::getAttrcatEntry()
-  int ret = AttrCacheTable::getAttrCatEntry(srcRelId, attr, &attrCatEntry);
+  // get the attribute catalog entry for attr, using
+  // AttrCacheTable::getAttrcatEntry()
   //    return E_ATTRNOTEXIST if it returns the error
-  if (ret != SUCCESS) return E_ATTRNOTEXIST;
-
+  int ret=AttrCacheTable::getAttrCatEntry(srcRelId,attr,&attrCatEntry);
+  if(ret!=SUCCESS){
+    return E_ATTRNOTEXIST;
+  }
 
   /*** Convert strVal (string) to an attribute of data type NUMBER or STRING ***/
   int type = attrCatEntry.attrType;
@@ -64,13 +61,11 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
 
   // Before calling the search function, reset the search to start from the first hit
   // using RelCacheTable::resetSearchIndex()
-  
   RelCacheTable::resetSearchIndex(srcRelId);
 
   RelCatEntry relCatEntry;
   // get relCatEntry using RelCacheTable::getRelCatEntry()
-  RelCacheTable::getRelCatEntry(srcRelId, &relCatEntry);
-
+  RelCacheTable::getRelCatEntry(srcRelId,&relCatEntry);
   /************************
   The following code prints the contents of a relation directly to the output
   console. Direct console output is not permitted by the actual the NITCbase
@@ -82,8 +77,10 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
   for (int i = 0; i < relCatEntry.numAttrs; ++i) {
     AttrCatEntry attrCatEntry;
     // get attrCatEntry at offset i using AttrCacheTable::getAttrCatEntry()
-    int ret = AttrCacheTable::getAttrCatEntry(srcRelId,i,&attrCatEntry);
-    if (ret!=SUCCESS) return E_ATTRNOTEXIST;
+    int ret=AttrCacheTable::getAttrCatEntry(srcRelId,i,&attrCatEntry);
+    if(ret!=SUCCESS){
+      return E_ATTRNOTEXIST;
+    }
     printf(" %s |", attrCatEntry.attrName);
   }
   printf("\n");
@@ -97,22 +94,21 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
       RecBuffer recBuffer(searchRes.block);
       Attribute recordEntry[relCatEntry.numAttrs];
       recBuffer.getRecord(recordEntry, searchRes.slot);
-
-      // print the attribute values in the same format as above
       printf("|");
-      for (int i = 0; i < relCatEntry.numAttrs; ++i) {
+      // print the attribute values in the same format as above
+      for(int i=0;i<relCatEntry.numAttrs;i++){
         AttrCatEntry attrCatEntry;
-        // get attrCatEntry at offset i using AttrCacheTable::getAttrCatEntry()
         AttrCacheTable::getAttrCatEntry(srcRelId,i,&attrCatEntry);
-        if (attrCatEntry.attrType == NUMBER)
-          printf(" %d |", (int)recordEntry[i].nVal);
-        else
-          printf(" %s |", recordEntry[i].sVal);
+        if(attrCatEntry.attrType==NUMBER){
+            printf(" %d |",(int)recordEntry[i].nVal);
+        }
+        else{
+            printf(" %s |",recordEntry[i].sVal);
+        }
+        //printf("\n");
       }
       printf("\n");
-
     } else {
-
       // (all records over)
       break;
     }
@@ -120,18 +116,6 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
 
   return SUCCESS;
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
