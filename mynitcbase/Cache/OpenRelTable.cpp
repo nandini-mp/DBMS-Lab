@@ -126,6 +126,7 @@ AttrCacheTable::attrCache[2]=head3;
   strcpy(tableMetaInfo[ATTRCAT_RELID].relName,ATTRCAT_RELNAME);
   for(int i=2;i<MAX_OPEN;i++){
     tableMetaInfo[i].free=true;
+    //tableMetaInfo[i].relName[0]='\0';
   }
 
 }
@@ -159,8 +160,9 @@ OpenRelTable::~OpenRelTable() {
 
 int OpenRelTable::getRelId(char relName[ATTR_SIZE]) {
   for(int i=0;i<MAX_OPEN;i++){
-  if(strcmp(relName,tableMetaInfo[i].relName)==0)
-    return i;
+    if (tableMetaInfo[i].free==false)
+      if(strcmp(relName,tableMetaInfo[i].relName)==0)
+        return i;
   }
   /* traverse through the tableMetaInfo array,
     find the entry in the Open Relation Table corresponding to relName.*/
@@ -206,6 +208,7 @@ int OpenRelTable::closeRel(int relId) {
   free(RelCacheTable::relCache[relId]);
   RelCacheTable::relCache[relId]=nullptr;
   AttrCacheTable::attrCache[relId]=nullptr;
+  tableMetaInfo[relId].relName[0] = '\0';
 
   // free the memory allocated in the relation and attribute caches which was
   // allocated in the OpenRelTable::openRel() function
