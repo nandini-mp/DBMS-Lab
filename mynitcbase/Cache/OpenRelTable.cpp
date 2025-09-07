@@ -199,13 +199,29 @@ int OpenRelTable::closeRel(int relId) {
     return E_RELNOTOPEN;
   }
 
+  /* RelCatEntry of the relId-th Relation Cache entry has been modified */
+  if (RelCacheTable::relCache[relId]->dirty)
+  {
+    /* Get the Relation Catalog entry from RelCacheTable::relCache
+    Then convert it to a record using RelCacheTable::relCatEntryToRecord(). */
+    Attribute record[RELCAT_NO_ATTRS];
+    RelCacheTable::relCatEntryToRecord(&RelCacheTable::relCache[relId]->relCatEntry,record);
+
+    // declaring an object of RecBuffer class to write back to the buffer
+    RecBuffer relCatBlock(RelCacheTable::relCache[relId]->recId.block);
+
+    // Write back to the buffer using relCatBlock.setRecord() with recId.slot
+    relCatBlock.setRecord(record,RelCacheTable::relCache[relId]->recId.slot);
+  }
+
+  free(RelCacheTable::relCache[relId]);
+
   AttrCacheEntry* head=AttrCacheTable::attrCache[relId];
   for(AttrCacheEntry *it=head,*next;it!=NULL;it=next){
     next=it->next;
     free(it);
   }
   tableMetaInfo[relId].free=true;
-  free(RelCacheTable::relCache[relId]);
   RelCacheTable::relCache[relId]=nullptr;
   AttrCacheTable::attrCache[relId]=nullptr;
   tableMetaInfo[relId].relName[0] = '\0';

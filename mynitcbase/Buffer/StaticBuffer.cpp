@@ -2,8 +2,14 @@
 
 unsigned char StaticBuffer::blocks[BUFFER_CAPACITY][BLOCK_SIZE];
 struct BufferMetaInfo StaticBuffer::metainfo[BUFFER_CAPACITY];
+// declare the blockAllocMap array
+unsigned char StaticBuffer::blockAllocMap[DISK_BLOCKS];
 
 StaticBuffer::StaticBuffer() {
+  // copy blockAllocMap blocks from disk to buffer (using readblock() of disk)
+  // blocks 0 to 3
+  for (int i=0;i<=3;i++)
+    Disk::readBlock(&blockAllocMap[BLOCK_SIZE*i],i);
 
   // initialise all blocks as free
   /*bufferIndex = 0 to BUFFER_CAPACITY-1*/
@@ -24,6 +30,10 @@ subsequent stages, we will implement the write-back functionality here.
 
 // write back all modified blocks on system exit
 StaticBuffer::~StaticBuffer() {
+  // copy blockAllocMap blocks from buffer to disk(using writeblock() of disk)
+  for (int i=0;i<=3;i++)
+    Disk::writeBlock(&blockAllocMap[BLOCK_SIZE*i],i);
+
   /*iterate through all the buffer blocks,
     write back blocks with metainfo as free=false,dirty=true
     using Disk::writeBlock()
