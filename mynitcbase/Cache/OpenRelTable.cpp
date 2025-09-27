@@ -139,20 +139,71 @@ OpenRelTable::~OpenRelTable() {
     }
   }
 
-  for(int i=0;i<MAX_OPEN;i++){
-    if(RelCacheTable::relCache[i]){
-      free(RelCacheTable::relCache[i]);
-      RelCacheTable::relCache[i]=nullptr;
-    }
+  /**** Closing the catalog relations in the relation cache ****/
+
+  //releasing the relation cache entry of the attribute catalog
+
+  /* RelCatEntry of the ATTRCAT_RELID-th RelCacheEntry has been modified */
+  if (RelCacheTable::relCache[ATTRCAT_RELID]->dirty) {
+
+    /* Get the Relation Catalog entry from RelCacheTable::relCache
+    Then convert it to a record using RelCacheTable::relCatEntryToRecord(). */
+    RelCatEntry relCatEntry;
+    RelCacheTable::getRelCatEntry(ATTRCAT_RELID,&relCatEntry);
+    Attribute relCatRecord[ATTRCAT_NO_ATTRS];
+    RelCacheTable::relCatEntryToRecord(&relCatEntry, relCatRecord);
+    RecId recId = RelCacheTable::relCache[ATTRCAT_RELID]->recId;
+
+    // declaring an object of RecBuffer class to write back to the buffer
+    RecBuffer relCatBlock(recId.block);
+
+    // Write back to the buffer using relCatBlock.setRecord() with recId.slot
+    relCatBlock.setRecord(relCatRecord,recId.slot);
   }
-  for(int i=0;i<MAX_OPEN;i++){
-    AttrCacheEntry* curr=AttrCacheTable::attrCache[i];
-    while(curr){
-      AttrCacheEntry *temp=curr;
-      curr=curr->next;
-      free(temp);
+  // free the memory dynamically allocated to this RelCacheEntry
+  //releasing the relation cache entry of the relation catalog
+  free(RelCacheTable::relCache[ATTRCAT_RELID]);
+
+  /* RelCatEntry of the RELCAT_RELID-th RelCacheEntry has been modified */
+  if (RelCacheTable::relCache[RELCAT_RELID]->dirty) {
+
+    /* Get the Relation Catalog entry from RelCacheTable::relCache
+    Then convert it to a record using RelCacheTable::relCatEntryToRecord(). */
+    RelCatEntry relCatEntry;
+    RelCacheTable::getRelCatEntry(RELCAT_RELID,&relCatEntry);
+    Attribute relCatRecord[RELCAT_NO_ATTRS];
+    RelCacheTable::relCatEntryToRecord(&relCatEntry, relCatRecord);
+    RecId recId = RelCacheTable::relCache[RELCAT_RELID]->recId;
+
+    // declaring an object of RecBuffer class to write back to the buffer
+    RecBuffer relCatBlock(recId.block);
+
+    // Write back to the buffer using relCatBlock.setRecord() with recId.slot
+    relCatBlock.setRecord(relCatRecord,recId.slot);
     }
-    AttrCacheTable::attrCache[i]=nullptr;
+
+    free(RelCacheTable::relCache[RELCAT_RELID]);
+
+
+  for (int i=0;i<=1;i++)
+  {
+    AttrCacheEntry *head = AttrCacheTable::attrCache[i]; //this is for attrcache, other was for relcache (relcat entries for relcat and attrcat)
+    while (head!=nullptr)
+    {
+      AttrCacheEntry* temp = head->next;
+      if (head->dirty) //if dirty, write back as a record to disk
+      {
+        AttrCatEntry attrCatEntry = head->attrCatEntry;
+        Attribute attrCatRecord[ATTRCAT_NO_ATTRS];
+        AttrCacheTable::attrCatEntryToRecord(&attrCatEntry, attrCatRecord);
+        RecId recId = head->recId;
+        RecBuffer attrCatBlock(recId.block);
+        attrCatBlock.setRecord(attrCatRecord,recId.slot);
+      }
+      free(head);
+      head=temp;
+    }
+
   }
 
 }
