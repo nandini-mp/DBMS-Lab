@@ -1,5 +1,5 @@
 #include "Algebra.h"
-
+#include <iostream>
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
@@ -111,7 +111,6 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
   // Before calling the search function, reset the search to start from the first hit
   // using RelCacheTable::resetSearchIndex()
   
-  RelCacheTable::resetSearchIndex(srcRelId);
   Attribute record[src_nAttrs];
 
   /*
@@ -126,7 +125,8 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
     */
 
     RelCacheTable::resetSearchIndex(srcRelId);
-    //AttrCacheTable::resetSearchIndex(srcRelId,);
+    RelCacheTable::resetSearchIndex(targetRelId);
+    AttrCacheTable::resetSearchIndex(srcRelId,attr);
 
 
     // read every record that satisfies the condition by repeatedly calling
@@ -153,7 +153,7 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
 
     // Close the targetRel by calling closeRel() method of schema layer
     Schema::closeRel(targetRel);
-
+    std::cout << StaticBuffer::count << "\n";
     // return SUCCESS.
     return SUCCESS;
 
