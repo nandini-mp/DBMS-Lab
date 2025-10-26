@@ -208,3 +208,65 @@ int AttrCacheTable::resetSearchIndex(int relId,int attrOffset) {
   IndexId searchIndex = {-1,-1};
   return AttrCacheTable::setSearchIndex(relId,attrOffset,&searchIndex);
 }
+
+
+int AttrCacheTable::setAttrCatEntry(int relId, char attrName[ATTR_SIZE], AttrCatEntry *attrCatBuf) {
+
+  if(relId<0 || relId>=MAX_OPEN) {/*relId is outside the range [0, MAX_OPEN-1]*/
+    return E_OUTOFBOUND;
+  }
+
+  /*entry corresponding to the relId in the Attribute Cache Table is free*/
+  if(attrCache[relId]==nullptr) {
+    return E_RELNOTOPEN;
+  }
+
+  /* each attribute corresponding to relation with relId */
+  for(AttrCacheEntry* entry=attrCache[relId];entry!=nullptr;entry=entry->next)
+  {
+    /* the attrName/offset field of the AttrCatEntry
+       is equal to the input attrName/attrOffset */
+    if (strcmp(attrName,entry->attrCatEntry.attrName)==0)
+    {
+      // copy the attrCatBuf to the corresponding Attribute Catalog entry in
+      // the Attribute Cache Table.
+
+      // set the dirty flag of the corresponding Attribute Cache entry in the
+      // Attribute Cache Table.
+      entry->attrCatEntry = *attrCatBuf;
+      entry->dirty = true;
+      return SUCCESS;
+    }
+  }
+
+  return E_ATTRNOTEXIST;
+}
+
+
+int AttrCacheTable::setAttrCatEntry(int relId, int attrOffset, AttrCatEntry *attrCatBuf) {
+
+  if(relId<0 || relId>=MAX_OPEN) {
+    return E_OUTOFBOUND;
+  }
+
+  if(attrCache[relId]==nullptr) {/*entry corresponding to the relId in the Attribute Cache Table is free*/
+    return E_RELNOTOPEN;
+  }
+  /* each attribute corresponding to relation with relId */
+  for(AttrCacheEntry* entry=attrCache[relId];entry!=nullptr;entry=entry->next)
+  {
+    if(entry->attrCatEntry.offset == attrOffset)
+    {
+      // copy the attrCatBuf to the corresponding Attribute Catalog entry in
+      // the Attribute Cache Table.
+
+      // set the dirty flag of the corresponding Attribute Cache entry in the
+      // Attribute Cache Table.
+      entry->attrCatEntry = *attrCatBuf;
+      entry->dirty = true;
+      return SUCCESS;
+    }
+  }
+
+  return E_ATTRNOTEXIST;
+}

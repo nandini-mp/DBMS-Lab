@@ -265,10 +265,23 @@ int OpenRelTable::closeRel(int relId) {
     relCatBlock.setRecord(record,RelCacheTable::relCache[relId]->recId.slot);
   }
 
+  // free the memory dynamically alloted to this Relation Cache entry
+  // and assign nullptr to that entry
   free(RelCacheTable::relCache[relId]);
 
   AttrCacheEntry* head=AttrCacheTable::attrCache[relId];
   for(AttrCacheEntry *it=head,*next;it!=NULL;it=next){
+    if (it->dirty)
+    {
+      /* Get the Attribute Catalog entry from attrCache
+      Then convert it to a record using AttrCacheTable::attrCatEntryToRecord().
+      Write back that entry by instantiating RecBuffer class. Use recId
+      member field and recBuffer.setRecord() */
+      Attribute record[ATTRCAT_NO_ATTRS];
+      AttrCacheTable::attrCatEntryToRecord(&it->attrCatEntry,record);
+      RecBuffer attrCatBlock(it->recId.block);
+      attrCatBlock.setRecord(record,it->recId.slot);
+    }
     next=it->next;
     free(it);
   }
